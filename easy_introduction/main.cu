@@ -3,15 +3,16 @@
 #include <cstdint>
 
 __global__
-void add(std::size_t n, float *x, float *y)
-{
-  for (std::size_t i = 0; i < n; i++) {
+void add(std::size_t n, float *x, float *y) {
+  int index = threadIdx.x;
+  int stride = blockDim.x;
+  for (int i = index; i < n; i += stride) {
     y[i] = x[i] + y[i];
   }
 }
 
 int main(int argc, char* argv[]) {
-  constexpr std::size_t N = 1<<20;
+  constexpr std::size_t N = 1<<23;
 
   float *x = nullptr;
   float *y = nullptr;
@@ -26,12 +27,12 @@ int main(int argc, char* argv[]) {
   }
 
   // Run kernel on 1M elements on the CPU
-  add<<<1, 1>>>(N, x, y);
+  add<<<1, 256>>>(N, x, y);
 
   // Check for errors (all values should be 3.0f)
   float maxError = 0.0f;
   for (std::size_t i = 0; i < N; i++){
-    maxError = std::max(maxError, std::fabs(y[i]-3.0f));
+    maxError = fmax(maxError, std::fabs(y[i]-3.0f));
   }
   std::cout << "Max error: " << maxError << std::endl;
   // Max error is 1.

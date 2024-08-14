@@ -2,3 +2,5 @@
 perf*
 main
 a.out
+*.nsys-rep
+*.sqlite
