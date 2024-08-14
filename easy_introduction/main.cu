@@ -36,6 +36,16 @@ int main(int argc, char* argv[]) {
   std::cout << "Max error: " << maxError << std::endl;
   // Max error is 1.
 
+  std::cout << std::endl;
+  cudaDeviceProp deviceProp;
+  cudaGetDeviceProperties(&deviceProp, 0); // 0-th device
+  std::cout << "name: " << deviceProp.name << std::endl;
+  std::cout << "multiProcessorCount: " << deviceProp.multiProcessorCount << std::endl;
+  std::cout << "memoryClockRate: " << deviceProp.memoryClockRate << std::endl;
+  std::cout << "maxThreadsPerMultiProcessor: " << deviceProp.maxThreadsPerMultiProcessor << std::endl;
+  std::cout << "maxThreadsPerBlock: " << deviceProp.maxThreadsPerBlock << std::endl;
+  std::cout << "maxBlocksPerMultiProcessor: " << deviceProp.maxBlocksPerMultiProcessor << std::endl;
+  std::cout << std::endl;
   // Free memory
   cudaFree(x);
   cudaFree(y);
