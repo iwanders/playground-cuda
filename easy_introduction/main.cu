@@ -4,15 +4,18 @@
 
 __global__
 void add(std::size_t n, float *x, float *y) {
-  int index = threadIdx.x;
-  int stride = blockDim.x;
+  //  int index = threadIdx.x;
+  //  int stride = blockDim.x;
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int stride = blockDim.x * gridDim.x;
   for (int i = index; i < n; i += stride) {
     y[i] = x[i] + y[i];
   }
 }
 
 int main(int argc, char* argv[]) {
-  constexpr std::size_t N = 1<<23;
+
+  constexpr std::size_t N = 1<<24;
 
   float *x = nullptr;
   float *y = nullptr;
@@ -27,7 +30,11 @@ int main(int argc, char* argv[]) {
   }
 
   // Run kernel on 1M elements on the CPU
-  add<<<1, 256>>>(N, x, y);
+  // This threads doesn't need to be compile time constant!
+  //  int threads = 256;
+  //  int blockSize = 256;
+  int numBlocks = (N + blockSize - 1) / blockSize;
+  add<<<numBlocks, blockSize>>>(N, x, y);
 
   // Check for errors (all values should be 3.0f)
   float maxError = 0.0f;
