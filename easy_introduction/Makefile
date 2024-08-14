@@ -1,5 +1,5 @@
 
 
 main:
-	clang++-13  -std=c++20 main.cpp -o main
+	nvcc  main.cu -o main
 .PHONY: main
