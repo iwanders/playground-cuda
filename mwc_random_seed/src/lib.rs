@@ -1,10 +1,23 @@
 use std::num::Wrapping;
 
-/// The multiply with carry rng.
+/// Implements a 32 bit MWC; x(n)=a*x(n-1) + carry mod 2^32
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct MultiplyWithCarry {
+    /// The multiplication factor used by the algorithm.
+    ///
+    /// There are quite some options; 0xf83f630a is one used by opencv [1].
+    /// There are more on the 1998 google groups archive [2]:
+    ///   1791398085 1929682203 1683268614 1965537969 1675393560
+    ///   1967773755 1517746329 1447497129 1655692410 1606218150
+    ///   2051013963 1075433238 1557985959 1781943330 1893513180
+    ///   1631296680 2131995753 2083801278 1873196400 1554115554
+    /// [1] https://github.com/opencv/opencv/blob/0838920371bfa267c103890138553439b4a507e7/modules/core/include/opencv2/core/types_c.h#L216
+    /// [2] https://groups.google.com/g/sci.math/c/ss3woKlsc3U/m/8K2TsYNAA_oJ
     a: u32,
+
+    /// Current carry value.
     c: Wrapping<u32>,
+    /// Current actual value.
     x: Wrapping<u32>,
 }
 
@@ -17,12 +30,12 @@ impl MultiplyWithCarry {
         }
     }
 
-    /// Access to the value part.
+    /// Access to the current value part.
     pub fn value(&self) -> u32 {
         self.x.0
     }
 
-    /// Access to the carry part.
+    /// Access to the current carry part.
     pub fn carry(&self) -> u32 {
         self.c.0
     }
@@ -39,7 +52,7 @@ impl MultiplyWithCarry {
     }
 
 
-    /// Generate a u32 that's below the limit.
+    /// Generate a u32 that's calculated modulo the limit.
     pub fn random_limited_u32(&mut self, limit: u32) -> u32 {
         if limit == 0 {
             return 0;
