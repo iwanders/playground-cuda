@@ -30,7 +30,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let mut rng = mwc_random_seed::MultiplyWithCarry::new(args.factor, args.value, args.carry);
+    let mut rng = mwc_random_seed::MultiplyWithCarryCpu::new(args.factor, args.value, args.carry);
 
     for _ in 0..args.advances {
         println!("{:0>8X}", rng.random_u32());
