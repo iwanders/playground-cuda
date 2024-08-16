@@ -56,6 +56,7 @@ __global__ void mwc_find_seed_kernel(
   std::uint64_t factor = factor_in;
   std::uint16_t calc[EXPECTED_COUNT_MAX * 2];
   std::uint32_t carry = carry_init;
+  //  std::uint32_t value = i + 1u<<31;
   std::uint32_t value = i;
   //  advance(factor, carry, value);
 
@@ -149,14 +150,17 @@ void test_generation() {
 
 void test_mwc_find_seed() {
   const std::size_t seed_limit = 1u<<31;
-  const std::size_t advance_limit = 500;
+  //  const std::size_t advance_limit = 500;
+  const std::size_t advance_limit = 10000;
   const std::size_t factor = 1791398085;
 
   const auto l = 150;
   const auto h = 500;
   const auto modulo = h - l;
-  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l}; // seed 3, known
-  //  std::array<std::uint32_t, 7> expected_values {364 - l, 480 - l, 317 - l, 210 - l, 368 - l, 224 - l, 303 - l}; // new, unknown
+  //  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l}; // seed 3, known
+  //  std::array<std::uint32_t, 7> expected_values {374 - l, 488 - l, 441 - l, 332 - l, 417 - l, 254 - l, 294 - l}; // seed 4, known
+  //  std::array<std::uint32_t, 7> expected_values {364 - l, 480 - l, 317 - l, 210 - l, 368 - l, 224 - l, 303 - l}; // new, late in advance, unknown
+  std::array<std::uint32_t, 7> expected_values {427 - l, 439 - l, 173 - l, 356 - l, 170 - l, 355 - l, 382 - l}; // new, 'early' in advance, unknown
 
 
   std::uint32_t* expected;
