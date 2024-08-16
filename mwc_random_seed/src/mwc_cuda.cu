@@ -84,6 +84,9 @@ __global__ void mwc_find_seed_kernel(
         printf("Found it at %d, %lu\n", i, a);
         //  return;
       }
+      if (c > 3) {
+        printf("Found it at %d, %lu, c: %lu\n", i, a, c);
+      }
     }
     //  printf("\n");
     if ((a == advance_limit - 1) && (i % (2<<16) == 0)) {
@@ -104,7 +107,7 @@ std::string hp(std::uint32_t v){
 
 void test_generation() {
   std::size_t N = 1ul<<16;
-  std::size_t advances = 500;
+  std::size_t advances = 10000;
 
   std::uint32_t* carry_init;
   std::uint32_t* value_init;
@@ -151,16 +154,28 @@ void test_generation() {
 void test_mwc_find_seed() {
   const std::size_t seed_limit = 1u<<31;
   //  const std::size_t advance_limit = 500;
-  const std::size_t advance_limit = 10000;
+  const std::size_t advance_limit = 5000;
   const std::size_t factor = 1791398085;
 
   const auto l = 150;
   const auto h = 500;
   const auto modulo = h - l;
-  //  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l}; // seed 3, known
-  //  std::array<std::uint32_t, 7> expected_values {374 - l, 488 - l, 441 - l, 332 - l, 417 - l, 254 - l, 294 - l}; // seed 4, known
+
+  // All roughly ~400 in
+  //  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l}; // seed 3, known, works
+  //  std::array<std::uint32_t, 7> expected_values {374 - l, 488 - l, 441 - l, 332 - l, 417 - l, 254 - l, 294 - l}; // seed 4, known, works
+  //  std::array<std::uint32_t, 7> expected_values {286 - l, 301 - l, 485 - l, 271 - l, 443 - l, 449 - l, 281 - l}; // seed 1337, known, works
+  //  std::array<std::uint32_t, 7> expected_values {418 - l, 363 - l, 274 - l, 348 - l, 162 - l, 219 - l, 282 - l}; // seed 65536, known, works
+  //  std::array<std::uint32_t, 7> expected_values {386 - l, 201 - l, 311 - l, 164 - l, 185 - l, 251 - l, 264 - l}; // seed 33554432, known, works
+  //  std::array<std::uint32_t, 7> expected_values {263 - l, 375 - l, 393 - l, 269 - l, 422 - l, 418 - l, 328 - l}; // seed 536870912, known, works
+  //  std::array<std::uint32_t, 7> expected_values {494 - l, 228 - l, 341 - l, 478 - l, 310 - l, 498 - l, 281 - l}; // seed 1073872896, known, works
+
+  //  std::array<std::uint32_t, 7> expected_values {207 - l, 272 - l, 297 - l, 413 - l, 207 - l, 235 - l, 268 - l}; // seed 2181038080, overflow!, known, 402, at 2147483647 = 0x7fffffff
+
+  // Stash is full...
   //  std::array<std::uint32_t, 7> expected_values {364 - l, 480 - l, 317 - l, 210 - l, 368 - l, 224 - l, 303 - l}; // new, late in advance, unknown
-  std::array<std::uint32_t, 7> expected_values {427 - l, 439 - l, 173 - l, 356 - l, 170 - l, 355 - l, 382 - l}; // new, 'early' in advance, unknown
+  //  std::array<std::uint32_t, 7> expected_values {427 - l, 439 - l, 173 - l, 356 - l, 170 - l, 355 - l, 382 - l}; // new, 'early' in advance, unknown
+  std::array<std::uint32_t, 6> expected_values {460 - l, 284 - l, 367 - l, 326 - l, 256 - l, 230 - l}; // new, 'early' in advance, unknown
 
 
   std::uint32_t* expected;
