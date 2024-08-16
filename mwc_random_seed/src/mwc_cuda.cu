@@ -47,7 +47,7 @@ __global__ void mwc_find_seed_kernel(
   __restrict__ std::uint32_t advance_limit,
   __restrict__ std::uint32_t modulo,
   __restrict__ std::uint32_t* expected,
-  __restrict__ std::size_t expected_count  
+  __restrict__ std::size_t expected_count
 ) {
   int i = (blockIdx.x * blockDim.x + threadIdx.x) + init_addition;
   if (i > init_limit) {
@@ -57,6 +57,7 @@ __global__ void mwc_find_seed_kernel(
   std::uint16_t calc[EXPECTED_COUNT_MAX * 2];
   std::uint32_t carry = carry_init;
   std::uint32_t value = i;
+  //  advance(factor, carry, value);
 
   std::uint32_t offsets[2] = {0, 0};
   for (std::size_t a = 0; a < advance_limit; a++) {
@@ -68,22 +69,25 @@ __global__ void mwc_find_seed_kernel(
     calc[oddeven * EXPECTED_COUNT_MAX + offsets[oddeven]] = inner_value % modulo;
     offsets[oddeven] = (offsets[oddeven] + 1) % EXPECTED_COUNT_MAX;
     // Do the compare.
-    printf("i: %d, a: %lu, oddeven: %lu\n", i, a, oddeven);
+    //  printf("i: %d, a: %lu, oddeven: %lu\n", i, a, oddeven);
     for (std::size_t c = 0; c < expected_count; c++) {
 
       const auto expect = expected[c];
       const auto value_offset = (offsets[oddeven] + c) % EXPECTED_COUNT_MAX;
       const auto value_obtained = calc[oddeven * EXPECTED_COUNT_MAX + value_offset];
-      printf("%d, ", value_obtained);
+      //  printf("%d, ", value_obtained);
       if (expect != value_obtained) {
         break;
       }
       if (c == (expected_count- 1)) {
         printf("Found it at %d, %lu\n", i, a);
-        return;
+        //  return;
       }
     }
-    printf("\n");
+    //  printf("\n");
+    if ((a == advance_limit - 1) && (i % (2<<16) == 0)) {
+      //  printf("Reached limit at %lu, for seed %d, value %x\n", a, i, value);
+    }
   }
 }
 
@@ -144,14 +148,15 @@ void test_generation() {
 
 
 void test_mwc_find_seed() {
-  const std::size_t seed_limit = 5;
+  const std::size_t seed_limit = 1u<<31;
   const std::size_t advance_limit = 500;
   const std::size_t factor = 1791398085;
 
   const auto l = 150;
   const auto h = 500;
   const auto modulo = h - l;
-  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l};
+  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l}; // seed 3, known
+  //  std::array<std::uint32_t, 7> expected_values {364 - l, 480 - l, 317 - l, 210 - l, 368 - l, 224 - l, 303 - l}; // new, unknown
 
 
   std::uint32_t* expected;
@@ -164,10 +169,10 @@ void test_mwc_find_seed() {
 
   //  const std::size_t N = 512;
   const auto N = seed_limit;
-  int blockSize = 1;
-  //  int numBlocks = ((N +  blockSize - 1) / blockSize) + 1;
-  int numBlocks = 1;
-  mwc_find_seed_kernel<<<numBlocks, blockSize>>>(factor, 3, seed_limit, carry_init, advance_limit, modulo, expected, expected_values.size());
+  int blockSize = 256;
+  int numBlocks = ((N +  blockSize - 1) / blockSize) + 1;
+  //  int numBlocks = 1;
+  mwc_find_seed_kernel<<<numBlocks, blockSize>>>(factor, 0, seed_limit, carry_init, advance_limit, modulo, expected, expected_values.size());
 
   cudaDeviceSynchronize();
 
