@@ -95,6 +95,15 @@ mod test {
                          \ inner rng1        \ inner rng2
             is n odd? even?
             inner rng gets initialised, first 'roll' is the value.
+
+            <-   n   ->
+            *         *          *        *         *       *       *     *     main rng
+                       \          \        \         \
+                        \          \        \         \
+                         \ odd_in1  \        \ odd_in2 \
+                                     \ even_in1         \ even_in2
+            is n odd? even? 
+            inner rng gets initialised, first 'roll' is the value.
         */
         for s in 1..=5 {
             let mut rng = MultiplyWithCarryCpu::new(1791398085, s, 333 * 2);
