@@ -2,9 +2,9 @@
 #include <array>
 #include <iostream>
 #include <iomanip>
+#include <unistd.h>
 
 extern "C" {
-
 
 __device__ inline void advance(const std::uint64_t& factor, std::uint32_t& carry, std::uint32_t& value) {
     std::uint64_t value_u64 = static_cast<std::uint64_t>(value);
@@ -21,6 +21,7 @@ __global__ void mwc_store_output_kernel(
   __restrict__ std::uint32_t* value_init,
   __restrict__ std::uint32_t** out,
   std::size_t advances) {
+
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   if (i >= count_in) {
     return;
@@ -36,18 +37,19 @@ __global__ void mwc_store_output_kernel(
   }
 }
 
-}
+
 
 std::string hp(std::uint32_t v){
   std::stringstream ss;
   ss << std::hex<< std::setfill('0') << std::setw(8) << v;
   return ss.str();
 }
+}
 
 #ifdef MAIN
 
-int main(int argc, char* argv[]) {
-  std::size_t N = 512;
+void test_generation() {
+  std::size_t N = 1ul<<16;
   std::size_t advances = 500;
 
   std::uint32_t* carry_init;
@@ -59,7 +61,7 @@ int main(int argc, char* argv[]) {
   for (std::size_t o=0; o < N; o++){
     cudaMallocManaged(&value_out[o], advances * sizeof(std::uint32_t));
   }
-  
+  sleep(5);
 
   // initialize x and y arrays on the host
   for (std::size_t i = 0; i < N; i++) {
@@ -82,7 +84,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-
   // Free memory
   cudaFree(carry_init);
   cudaFree(value_init);
@@ -90,6 +91,10 @@ int main(int argc, char* argv[]) {
     cudaMallocManaged(&value_out[o], advances * sizeof(std::uint32_t));
   }
   cudaFree(value_out);
+}
+
+int main(int argc, char* argv[]) {
+  test_generation();
   return 0;
 }
 
