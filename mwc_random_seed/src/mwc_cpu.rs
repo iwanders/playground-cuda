@@ -85,7 +85,7 @@ mod test {
         let h = 500;
         let modulo = h - l;
         let max_advance = 500;
-        let expected_values = [201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l];
+        let expected_values: [u32;7] = [201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l];
         /*
            
             <-   n   ->
@@ -96,23 +96,23 @@ mod test {
             is n odd? even?
             inner rng gets initialised, first 'roll' is the value.
         */
-        for s in 1..5 {
+        for s in 1..=5 {
             let mut rng = MultiplyWithCarryCpu::new(1791398085, s, 333 * 2);
-            rng.random_u32();
-            let mut past_values = [0; 7];
+            // rng.random_u32();
+            let mut past_values = [[0; 7];2];
             for advance in 0..max_advance {
-                let _drop = rng.random_u32();
                 let inner_init = rng.random_u32();
 
                 let mut inner_rng = MultiplyWithCarryCpu::new(1791398085, inner_init, 333 * 2);
                 let new_value = inner_rng.random_limited_u32(modulo);
-
-                past_values.rotate_left(1);
-                past_values[past_values.len() - 1] = new_value;
-                if past_values == expected_values {
+                let this_entry = &mut past_values[(advance % 2) as usize];
+                this_entry.rotate_left(1);
+                this_entry[expected_values.len() - 1] = new_value;
+                if *this_entry == expected_values {
                     println!("Found it at {advance}");
                     return;
                 }
+                println!("past_values: {past_values:?}");
             }
         }
         assert!(false, "if we got here we didn't find the seed");
