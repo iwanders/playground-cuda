@@ -86,6 +86,16 @@ mod test {
         let modulo = h - l;
         let max_advance = 500;
         let expected_values = [201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l];
+        /*
+           
+            <-   n   ->
+            *         *          *        *       *       *       *     *     main rng
+                       \         drop      \
+                        \                   \
+                         \ inner rng1        \ inner rng2
+            is n odd? even?
+            inner rng gets initialised, first 'roll' is the value.
+        */
         for s in 1..5 {
             let mut rng = MultiplyWithCarryCpu::new(1791398085, s, 333 * 2);
             rng.random_u32();
