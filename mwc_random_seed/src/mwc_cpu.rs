@@ -79,4 +79,34 @@ mod test {
         assert_eq!(rng.random_u32(), 0xB6AAB839);
         assert_eq!(rng.random_u32(), 0xBFC793C3);
     }
+    #[test]
+    fn test_mwc_find_seed() {
+        let l = 0;
+        let h = 500;
+        let modulo = h - l;
+        let max_advance = 200;
+        let expected_values = [201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l];
+        let l = 150;
+        for s in 3..=3 {
+            let mut rng = MultiplyWithCarryCpu::new(1791398085, s, 333 * 2);
+            rng.random_u32();
+            let mut past_values = [0; 7];
+            for _advance in 0..max_advance {
+                past_values.rotate_left(1);
+                let _drop = rng.random_u32();
+                // let _drop = rng.random_u32();
+                let inner_init = rng.random_u32();
+                println!("drop: {_drop:0>8x} inner init: {inner_init:0>8x}");
+                let mut inner_rng = MultiplyWithCarryCpu::new(1791398085, inner_init, 333 * 2);
+                let v = (inner_rng.random_u32() % (h - l)) + l;
+                // past_values[past_values.len() - 1] = rng.random_limited_u32(modulo);
+                past_values[past_values.len() - 1] = v;
+                println!("at {s} with {_advance} and: {past_values:?}");
+                if past_values == expected_values {
+                    println!("Found it!");
+                    return;
+                }
+            }
+        }
+    }
 }
