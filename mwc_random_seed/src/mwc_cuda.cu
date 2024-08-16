@@ -173,9 +173,10 @@ void test_mwc_find_seed() {
   //  std::array<std::uint32_t, 7> expected_values {207 - l, 272 - l, 297 - l, 413 - l, 207 - l, 235 - l, 268 - l}; // seed 2181038080, overflow!, known, 402, at 2147483647 = 0x7fffffff
 
   // Stash is full...
+  // All have pickup from ground.
   //  std::array<std::uint32_t, 7> expected_values {364 - l, 480 - l, 317 - l, 210 - l, 368 - l, 224 - l, 303 - l}; // new, late in advance, unknown
   //  std::array<std::uint32_t, 7> expected_values {427 - l, 439 - l, 173 - l, 356 - l, 170 - l, 355 - l, 382 - l}; // new, 'early' in advance, unknown
-  std::array<std::uint32_t, 6> expected_values {460 - l, 284 - l, 367 - l, 326 - l, 256 - l, 230 - l}; // new, 'early' in advance, unknown
+  std::array<std::uint32_t, 6> expected_values {460 - l, 284 - l, 367 - l, 326 - l, 256 - l, 230 - l}; // new, 'early' in advance, unknown, 
 
 
   std::uint32_t* expected;
