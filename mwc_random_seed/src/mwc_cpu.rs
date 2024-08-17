@@ -121,9 +121,54 @@ mod test {
                     println!("Found it at {advance}");
                     return;
                 }
-                println!("past_values: {past_values:?}");
+                // println!("past_values: {past_values:?}");
             }
         }
         assert!(false, "if we got here we didn't find the seed");
+    }
+
+    // http://jmasm.com/index.php/jmasm/article/view/57/56
+    // https://digitalcommons.wayne.edu/jmasm/vol2/iss1/2/
+    // DOI 10.22237/jmasm/1051747320
+    // page 7;
+    #[test]
+    fn is_it_an_lcg_with_modulo(){
+        // And still another feature of the MWC sequence generated on pairs [c, x] by means of
+        // f([a, c]) = [_(ax + c)_, (ax + c) mod b] is that the resultsing x's are just the
+        // elements of the congruential sequence y_n = ay_n-1 mod (ab - 1) reduced mod b.
+        // with seed y0 is s * b + c
+        // reproduce paper
+        {
+            let a = 698769069;
+            let c = 123;
+            let x = 456789;
+            let mut rng = MultiplyWithCarryCpu::new(a, x, c);
+            let b : u128 = 1 << 32;
+            let y0: u128 = c as u128 * b + x as u128;
+            let mut yn: u128 = y0;
+            for i in 0..10 {
+                let mwc = rng.random_u32();
+                yn = ((a as u128) * yn) % (((a as u128) * b) -1);
+                let lcg = yn % (1<<32) ;
+                println!("mwc: {mwc} lcg: {lcg}");
+                assert_eq!(mwc, lcg as u32);
+            }
+        }
+        for s in [1, 1337, 354322, 1702494920] {
+            let a = 1791398085;
+            let c = 333 * 2;
+            let x = s;
+            let mut rng = MultiplyWithCarryCpu::new(a, x, c);
+            let b : u128 = 1 << 32;
+            let y0: u128 = c as u128 * b + x as u128;
+            let mut yn: u128 = y0;
+            for i in 0..100 {
+                let mwc = rng.random_u32();
+                yn = ((a as u128) * yn) % (((a as u128) * b) -1);
+                let lcg = yn % (1<<32) ;
+                // println!("mwc: {mwc} lcg: {lcg}");
+                assert_eq!(mwc, lcg as u32);
+            }
+        }
     }
 }
