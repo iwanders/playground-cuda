@@ -56,9 +56,13 @@ __global__ void mwc_find_seed_kernel(
   std::uint64_t factor = factor_in;
   std::uint16_t calc[EXPECTED_COUNT_MAX * 2];
   std::uint32_t carry = carry_init;
-  //  std::uint32_t value = i + 1u<<31;
+  //  std::uint32_t value = static_cast<std::uint32_t>(i) + static_cast<std::uint32_t>(1u<<31);
   std::uint32_t value = i;
   //  advance(factor, carry, value);
+
+  if (i % (2 << 24) == 0) {
+    printf("i: %u\n", value);
+  }
 
   std::uint32_t offsets[2] = {0, 0};
   for (std::size_t a = 0; a < advance_limit; a++) {
@@ -81,7 +85,7 @@ __global__ void mwc_find_seed_kernel(
         break;
       }
       if (c == (expected_count- 1)) {
-        printf("Found it at %d, %lu\n", i, a);
+        printf("Found full sequence at %d, %lu\n", i, a);
         //  return;
       }
       if (c > 3) {
@@ -154,7 +158,7 @@ void test_generation() {
 void test_mwc_find_seed() {
   const std::size_t seed_limit = 1u<<31;
   //  const std::size_t advance_limit = 500;
-  const std::size_t advance_limit = 5000;
+  const std::size_t advance_limit = 50000;
   const std::size_t factor = 1791398085;
 
   const auto l = 150;
@@ -176,7 +180,9 @@ void test_mwc_find_seed() {
   // All have pickup from ground.
   //  std::array<std::uint32_t, 7> expected_values {364 - l, 480 - l, 317 - l, 210 - l, 368 - l, 224 - l, 303 - l}; // new, late in advance, unknown
   //  std::array<std::uint32_t, 7> expected_values {427 - l, 439 - l, 173 - l, 356 - l, 170 - l, 355 - l, 382 - l}; // new, 'early' in advance, unknown
-  std::array<std::uint32_t, 6> expected_values {460 - l, 284 - l, 367 - l, 326 - l, 256 - l, 230 - l}; // new, 'early' in advance, unknown, 
+  //  std::array<std::uint32_t, 6> expected_values {460 - l, 284 - l, 367 - l, 326 - l, 256 - l, 230 - l}; // new, 'early' in advance, unknown, 
+  // not from ground
+  std::array<std::uint32_t, 7> expected_values {399 - l, 468 - l, 313 - l, 235 - l, 377 - l, 362 - l, 247 - l}; // new, 'early' in advance, unknown, 
 
 
   std::uint32_t* expected;
@@ -194,6 +200,11 @@ void test_mwc_find_seed() {
   //  int numBlocks = 1;
   mwc_find_seed_kernel<<<numBlocks, blockSize>>>(factor, 0, seed_limit, carry_init, advance_limit, modulo, expected, expected_values.size());
 
+  
+  // Avoid spinloop by sleeping this thread until woken by the OS.
+  // https://forums.developer.nvidia.com/t/cpu-spins-while-waiting-for-gpu-to-finish-computation/241672/5
+  // https://forums.developer.nvidia.com/t/best-practices-for-cudadevicescheduleblockingsync-usage-pattern-on-linux/180741/2
+  cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
   cudaDeviceSynchronize();
 
 
