@@ -158,7 +158,7 @@ void test_generation() {
 void test_mwc_find_seed() {
   const std::size_t seed_limit = 1u<<31;
   //  const std::size_t advance_limit = 500;
-  const std::size_t advance_limit = 50000;
+  const std::size_t advance_limit = 500;
   const std::size_t factor = 1791398085;
 
   const auto l = 150;
@@ -175,6 +175,14 @@ void test_mwc_find_seed() {
   //  std::array<std::uint32_t, 7> expected_values {494 - l, 228 - l, 341 - l, 478 - l, 310 - l, 498 - l, 281 - l}; // seed 1073872896, known, works
 
   //  std::array<std::uint32_t, 7> expected_values {207 - l, 272 - l, 297 - l, 413 - l, 207 - l, 235 - l, 268 - l}; // seed 2181038080, overflow!, known, 402, at 2147483647 = 0x7fffffff
+  //  std::array<std::uint32_t, 7> expected_values {394 - l, 306 - l, 448 - l, 203 - l, 449 - l, 389 - l, 408 - l}; // offline, random seed; calculated 845361015 @ 408
+  std::array<std::uint32_t, 7> expected_values {284 - l, 296 - l, 393 - l, 248 - l, 434 - l, 162 - l, 291 - l}; // offline, random seed; calculated 1702494920,  @ 398
+
+
+
+
+
+
 
   // Stash is full...
   // All have pickup from ground.
@@ -182,7 +190,7 @@ void test_mwc_find_seed() {
   //  std::array<std::uint32_t, 7> expected_values {427 - l, 439 - l, 173 - l, 356 - l, 170 - l, 355 - l, 382 - l}; // new, 'early' in advance, unknown
   //  std::array<std::uint32_t, 6> expected_values {460 - l, 284 - l, 367 - l, 326 - l, 256 - l, 230 - l}; // new, 'early' in advance, unknown, 
   // not from ground
-  std::array<std::uint32_t, 7> expected_values {399 - l, 468 - l, 313 - l, 235 - l, 377 - l, 362 - l, 247 - l}; // new, 'early' in advance, unknown, 
+  //  std::array<std::uint32_t, 7> expected_values {399 - l, 468 - l, 313 - l, 235 - l, 377 - l, 362 - l, 247 - l}; // new, 'early' in advance, unknown, 
 
 
   std::uint32_t* expected;
