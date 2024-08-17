@@ -134,17 +134,24 @@ mod test {
         let modulo = h - l;
         let max_advance = 500;
         let max: u64 = 1 << 32;
-        let search = 460 - l;
+        // let search = 460 - l;
+        let search = 461 - l;
         let mut found_seeds = vec![];
+        let mut only_even = true;
+        let mut only_odd = true;
         for s in 0..=max {
             let mut inner_rng = MultiplyWithCarryCpu::new(1791398085, s as u32, 333 * 2);
             let value = inner_rng.random_u32() % modulo;
             if value == search {
                 found_seeds.push(s as u32);
+                // println!("{s: >10}  {s:0>8x} {s:0>32b}  only even: {only_even} only odd: {only_odd}");
+                only_even &= (s % 2) == 0;
+                only_odd &= (s % 2) != 0;
             }
             
         }
-        println!("Found {} seeds that match {search}", found_seeds.len());
+        println!("Found {} seeds that match {search} only even: {only_even} only odd: {only_odd}", found_seeds.len());
+        // Oh this is interesting, the parity of the search matches the parity of the output.
     }
 
 
