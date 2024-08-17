@@ -127,6 +127,27 @@ mod test {
         assert!(false, "if we got here we didn't find the seed");
     }
 
+    #[test]
+    fn test_mwc_check_modulo() {
+        let l = 150;
+        let h = 500;
+        let modulo = h - l;
+        let max_advance = 500;
+        let max: u64 = 1 << 32;
+        let search = 460 - l;
+        let mut found_seeds = vec![];
+        for s in 0..=max {
+            let mut inner_rng = MultiplyWithCarryCpu::new(1791398085, s as u32, 333 * 2);
+            let value = inner_rng.random_u32() % modulo;
+            if value == search {
+                found_seeds.push(s as u32);
+            }
+            
+        }
+        println!("Found {} seeds that match {search}", found_seeds.len());
+    }
+
+
     // http://jmasm.com/index.php/jmasm/article/view/57/56
     // https://digitalcommons.wayne.edu/jmasm/vol2/iss1/2/
     // DOI 10.22237/jmasm/1051747320
