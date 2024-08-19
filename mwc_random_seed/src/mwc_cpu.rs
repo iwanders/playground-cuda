@@ -71,7 +71,7 @@ impl std::fmt::Debug for MultiplyWithCarryCpu {
 mod test {
     use super::*;
     #[test]
-    fn test_mwc() {
+    fn test_mwc_cpu() {
         let mut rng = MultiplyWithCarryCpu::new(1791398085, 1, 333 * 2);
         assert_eq!(rng.random_u32(), 0x6AC6935F);
         assert_eq!(rng.random_u32(), 0x2F2ED81B);
