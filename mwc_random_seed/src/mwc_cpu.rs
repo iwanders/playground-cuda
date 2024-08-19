@@ -134,8 +134,8 @@ mod test {
         let modulo = h - l;
         let max_advance = 500;
         let max: u64 = 1 << 32;
-        // let search = 460 - l;
-        let search = 461 - l;
+        let search = 460 - l;
+        // let search = 461 - l;
         let mut found_seeds = vec![];
         let mut only_even = true;
         let mut only_odd = true;
@@ -144,7 +144,7 @@ mod test {
             let value = inner_rng.random_u32() % modulo;
             if value == search {
                 found_seeds.push(s as u32);
-                // println!("{s: >10}  {s:0>8x} {s:0>32b}  only even: {only_even} only odd: {only_odd}");
+                println!("{s: >10}  {s:0>8x} {s:0>32b}  only even: {only_even} only odd: {only_odd}");
                 only_even &= (s % 2) == 0;
                 only_odd &= (s % 2) != 0;
             }
