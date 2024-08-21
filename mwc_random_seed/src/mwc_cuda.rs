@@ -58,10 +58,18 @@ impl MultiplyWithCarryCuda {
         // let output_gpu = self.gpu.htod_copy(output)?;
         let f = self.gpu.get_func("mwc_module", "mwc_store_output_kernel").unwrap();
 
+
         unsafe { f.launch(LaunchConfig::for_num_elems(init.len() as u32), (factor, init.len(), &carry_gpu, &value_gpu, &output_gpu_slice, advances)) }?;
 
         self.gpu.synchronize()?;
-        todo!()
+
+        let mut output = vec![];
+        for out_gpu in output_gpu {
+            output.push(self.gpu.dtoh_sync_copy(&out_gpu)?);
+        }
+        self.gpu.synchronize()?;
+        // println!("Found {:?} in {:?}", c_host, start.elapsed());
+        Ok(output)
     }
 }
 
@@ -72,7 +80,11 @@ mod test{
     fn test_mwc_cuda() -> Result<(), Error> {
         let mut mwc_cuda = MultiplyWithCarryCuda::new()?;
         let v = mwc_cuda.store_outputs(&[(1, 333*2)], 1791398085, 5)?;
-
+        let expected = [0x6AC6935F, 0x2F2ED81B, 0x280687C4, 0xB6AAB839, 0xBFC793C3];
+        for (i, value) in expected.iter().enumerate() {
+            println!("Value from cuda: {value:0>8x}");
+            assert_eq!(v[0][i], *value);
+        };
         Ok(())
     }
 }
