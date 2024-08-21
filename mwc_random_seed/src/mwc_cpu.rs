@@ -51,7 +51,6 @@ impl MultiplyWithCarryCpu {
         self.x.0
     }
 
-
     /// Generate a u32 that's calculated modulo the limit.
     pub fn random_limited_u32(&mut self, limit: u32) -> u32 {
         if limit == 0 {
@@ -85,9 +84,17 @@ mod test {
         let h = 500;
         let modulo = h - l;
         let max_advance = 500;
-        let expected_values: [u32;7] = [201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l];
+        let expected_values: [u32; 7] = [
+            201 - l,
+            484 - l,
+            188 - l,
+            496 - l,
+            432 - l,
+            347 - l,
+            356 - l,
+        ];
         /*
-           
+
             <-   n   ->
             *         *          *        *       *       *       *     *     main rng
                        \         drop      \
@@ -102,13 +109,13 @@ mod test {
                         \          \        \         \
                          \ odd_in1  \        \ odd_in2 \
                                      \ even_in1         \ even_in2
-            is n odd? even? 
+            is n odd? even?
             inner rng gets initialised, first 'roll' is the value.
         */
         for s in 1..=5 {
             let mut rng = MultiplyWithCarryCpu::new(1791398085, s, 333 * 2);
             // rng.random_u32();
-            let mut past_values = [[0; 7];2];
+            let mut past_values = [[0; 7]; 2];
             for advance in 0..max_advance {
                 let inner_init = rng.random_u32();
 
@@ -144,23 +151,26 @@ mod test {
             let value = inner_rng.random_u32() % modulo;
             if value == search {
                 found_seeds.push(s as u32);
-                println!("{s: >10}  {s:0>8x} {s:0>32b}  only even: {only_even} only odd: {only_odd}");
+                println!(
+                    "{s: >10}  {s:0>8x} {s:0>32b}  only even: {only_even} only odd: {only_odd}"
+                );
                 only_even &= (s % 2) == 0;
                 only_odd &= (s % 2) != 0;
             }
-            
         }
-        println!("Found {} seeds that match {search} only even: {only_even} only odd: {only_odd}", found_seeds.len());
+        println!(
+            "Found {} seeds that match {search} only even: {only_even} only odd: {only_odd}",
+            found_seeds.len()
+        );
         // Oh this is interesting, the parity of the search matches the parity of the output.
     }
-
 
     // http://jmasm.com/index.php/jmasm/article/view/57/56
     // https://digitalcommons.wayne.edu/jmasm/vol2/iss1/2/
     // DOI 10.22237/jmasm/1051747320
     // page 7;
     #[test]
-    fn is_it_an_lcg_with_modulo(){
+    fn is_it_an_lcg_with_modulo() {
         // And still another feature of the MWC sequence generated on pairs [c, x] by means of
         // f([a, c]) = [_(ax + c)_, (ax + c) mod b] is that the resultsing x's are just the
         // elements of the congruential sequence y_n = ay_n-1 mod (ab - 1) reduced mod b.
@@ -171,13 +181,13 @@ mod test {
             let c = 123;
             let x = 456789;
             let mut rng = MultiplyWithCarryCpu::new(a, x, c);
-            let b : u128 = 1 << 32;
+            let b: u128 = 1 << 32;
             let y0: u128 = c as u128 * b + x as u128;
             let mut yn: u128 = y0;
             for i in 0..10 {
                 let mwc = rng.random_u32();
-                yn = ((a as u128) * yn) % (((a as u128) * b) -1);
-                let lcg = yn % (1<<32) ;
+                yn = ((a as u128) * yn) % (((a as u128) * b) - 1);
+                let lcg = yn % (1 << 32);
                 println!("mwc: {mwc} lcg: {lcg}");
                 assert_eq!(mwc, lcg as u32);
             }
@@ -187,13 +197,13 @@ mod test {
             let c = 333 * 2;
             let x = s;
             let mut rng = MultiplyWithCarryCpu::new(a, x, c);
-            let b : u128 = 1 << 32;
+            let b: u128 = 1 << 32;
             let y0: u128 = c as u128 * b + x as u128;
             let mut yn: u128 = y0;
             for i in 0..100 {
                 let mwc = rng.random_u32();
-                yn = ((a as u128) * yn) % (((a as u128) * b) -1);
-                let lcg = yn % (1<<32) ;
+                yn = ((a as u128) * yn) % (((a as u128) * b) - 1);
+                let lcg = yn % (1 << 32);
                 // println!("mwc: {mwc} lcg: {lcg}");
                 assert_eq!(mwc, lcg as u32);
             }

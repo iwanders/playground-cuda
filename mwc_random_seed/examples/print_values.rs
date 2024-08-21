@@ -24,7 +24,7 @@ struct Args {
     carry: u32,
 
     /// Number of advances to perform.
-    #[arg(short, long, default_value_t=5)]
+    #[arg(short, long, default_value_t = 5)]
     advances: usize,
 }
 
