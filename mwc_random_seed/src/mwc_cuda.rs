@@ -47,10 +47,11 @@ impl MultiplyWithCarryCuda {
             output_gpu.push(carry_gpu);
         }
 
+        use cudarc::driver::sys::CUdeviceptr;
+        use cudarc::driver::{DevicePtr};
+        let mut output_gpu_vec : Vec< CUdeviceptr > = vec![];
 
-        let mut output_gpu_vec : Vec< &mut CudaSlice<u32> > = vec![];
-
-        output_gpu_vec = output_gpu.iter_mut().collect();
+        output_gpu_vec = output_gpu.iter().map(|v| *v.device_ptr()).collect();
         let output_gpu_slice = self.gpu.htod_copy(output_gpu_vec)?;
         
 
