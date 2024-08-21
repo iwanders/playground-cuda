@@ -46,9 +46,7 @@ impl MultiplyWithCarryCuda {
         // Create the output vectors.
         let mut output_gpu = vec![];
         for _ in 0..init.len() {
-            let a: Vec<u32> = vec![0u32; advances];
-            let carry_gpu = self.gpu.htod_copy(a)?;
-            output_gpu.push(carry_gpu);
+            output_gpu.push(self.gpu.alloc_zeros::<u32>(advances)?);
         }
 
         // Create the output vector of points to vectors of values.
