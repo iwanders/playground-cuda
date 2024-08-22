@@ -85,14 +85,81 @@ impl MultiplyWithCarryCuda {
 
         Ok(output)
     }
+
+    pub fn find_seed(
+        &self,
+        factor: u32,
+        init_limit: usize,
+        carry_init: u32,
+        advance_limit: u32,
+        modulo: u32,
+        expected: &[u32],
+    ) -> Result<Vec<u32>, Error> {
+        // __restrict__ std::uint32_t factor_in,
+        // __restrict__ std::size_t init_addition,
+        // __restrict__ std::size_t init_limit,
+        // __restrict__ std::uint32_t carry_init,
+        // __restrict__ std::uint32_t advance_limit,
+        // __restrict__ std::uint32_t modulo,
+        // __restrict__ std::uint32_t* expected,
+        // __restrict__ std::size_t expected_count,
+        // __restrict__ std::uint32_t* output_matches,
+        // __restrict__ std::size_t output_in,
+        // __restrict__ std::uint32_t* output_found // handled atomically.
+
+        let expected: Vec<u32> = expected.to_vec();
+        let expected_len = expected.len();
+        let expected_gpu = self.gpu.htod_copy(expected)?;
+
+        const OUTPUT_IN: usize = 64;
+        let output_matches = self.gpu.alloc_zeros::<u32>(OUTPUT_IN)?;
+        let output_found = self.gpu.alloc_zeros::<u32>(1)?;
+
+        // Get the appropriate kernel.
+        let f = self
+            .gpu
+            .get_func("mwc_module", "mwc_find_seed_kernel")
+            .unwrap();
+
+        // Start the kernel
+        unsafe {
+            f.launch(
+                LaunchConfig::for_num_elems(init_limit as u32),
+                (
+                    factor,
+                    0, // init addition
+                    init_limit,
+                    carry_init,
+                    advance_limit,
+                    modulo,
+                    &expected_gpu,
+                    expected_len,
+                    &output_matches,
+                    OUTPUT_IN,
+                    &output_found,
+                ),
+            )
+        }?;
+
+        // Wait for it to complete.
+        self.gpu.synchronize()?;
+
+        let value: Vec<u32> = self.gpu.dtoh_sync_copy(&output_found)?;
+        let count = value[0];
+
+        // Copy the outputs back to the host
+        let mut matching = self.gpu.dtoh_sync_copy(&output_matches)?;
+        matching.truncate(count as usize);
+        Ok(matching)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     #[test]
-    fn test_mwc_cuda() -> Result<(), Error> {
-        let mut mwc_cuda = MultiplyWithCarryCuda::new()?;
+    fn test_cuda_mwc() -> Result<(), Error> {
+        let mwc_cuda = MultiplyWithCarryCuda::new()?;
         let v = mwc_cuda.store_outputs(&[(1, 333 * 2), (1, 333 * 2)], 1791398085, 5)?;
         let expected = [0x6AC6935F, 0x2F2ED81B, 0x280687C4, 0xB6AAB839, 0xBFC793C3];
         for k in 0..v.len() {
@@ -101,6 +168,37 @@ mod test {
                 assert_eq!(v[k][i], *value);
             }
         }
+        Ok(())
+    }
+    #[test]
+    fn test_cuda_seed_find() -> Result<(), Error> {
+        let mwc_cuda = MultiplyWithCarryCuda::new()?;
+        let l = 150;
+        let h = 500;
+        let modulo = h - l;
+        let expected = [
+            418 - l,
+            363 - l,
+            274 - l,
+            348 - l,
+            162 - l,
+            219 - l,
+            282 - l,
+        ]; // seed 65536
+        let init_limit = 1 << 24;
+        let carry_init = 333 * 2;
+        let advance_limit = 1024;
+        let found_seeds = mwc_cuda.find_seed(
+            1791398085,
+            init_limit,
+            carry_init,
+            advance_limit,
+            modulo,
+            &expected,
+        )?;
+        println!("found_seeds: {found_seeds:?}");
+        assert_eq!(found_seeds.len(), 1);
+        assert_eq!(found_seeds[0], 65536);
         Ok(())
     }
 }
