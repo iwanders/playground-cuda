@@ -47,17 +47,29 @@ __global__ void mwc_find_seed_kernel(
   __restrict__ std::uint32_t advance_limit,
   __restrict__ std::uint32_t modulo,
   __restrict__ std::uint32_t* expected,
-  __restrict__ std::size_t expected_count
+  __restrict__ std::size_t expected_count,
+  __restrict__ std::uint32_t* output_matches,
+  __restrict__ std::size_t output_in,
+  __restrict__ std::uint32_t* output_found // handled atomically.
 ) {
   int i = (blockIdx.x * blockDim.x + threadIdx.x) + init_addition;
   if (i > init_limit) {
     return;
   }
+
+  {
+    const std::uint32_t current_index = atomicAdd(output_found, 0);
+    if (current_index >= output_in) {
+      return;
+    }
+  }
+
   std::uint64_t factor = factor_in;
   std::uint16_t calc[EXPECTED_COUNT_MAX * 2];
   std::uint32_t carry = carry_init;
   //  std::uint32_t value = static_cast<std::uint32_t>(i) + static_cast<std::uint32_t>(1u<<31);
   std::uint32_t value = i;
+  std::uint32_t init_value = i;
   //  advance(factor, carry, value);
 
   if (i % (2 << 24) == 0) {
@@ -85,12 +97,15 @@ __global__ void mwc_find_seed_kernel(
         break;
       }
       if (c == (expected_count- 1)) {
-        printf("Found full sequence at %d, %lu\n", i, a);
-        //  return;
+        const auto index = atomicAdd(output_found, 1);
+        if (index >= output_in) {
+          return;
+        }
+        output_matches[index] = init_value;
       }
-      if (c > 3) {
-        printf("Found it at %d, %lu, c: %lu\n", i, a, c);
-      }
+      //  if (c > 3) {
+        //  printf("Found it at %d, %lu, c: %lu\n", i, a, c);
+      //  }
     }
     //  printf("\n");
     if ((a == advance_limit - 1) && (i % (2<<16) == 0)) {
@@ -156,7 +171,7 @@ void test_generation() {
 
 
 void test_mwc_find_seed() {
-  const std::size_t seed_limit = 1u<<31;
+  const std::size_t seed_limit = 1u<<24;
   //  const std::size_t advance_limit = 500;
   const std::size_t advance_limit = 500;
   const std::size_t factor = 1791398085;
@@ -169,14 +184,14 @@ void test_mwc_find_seed() {
   //  std::array<std::uint32_t, 7> expected_values {201 - l, 484 - l, 188 - l, 496 - l, 432 - l, 347 - l, 356 - l}; // seed 3, known, works
   //  std::array<std::uint32_t, 7> expected_values {374 - l, 488 - l, 441 - l, 332 - l, 417 - l, 254 - l, 294 - l}; // seed 4, known, works
   //  std::array<std::uint32_t, 7> expected_values {286 - l, 301 - l, 485 - l, 271 - l, 443 - l, 449 - l, 281 - l}; // seed 1337, known, works
-  //  std::array<std::uint32_t, 7> expected_values {418 - l, 363 - l, 274 - l, 348 - l, 162 - l, 219 - l, 282 - l}; // seed 65536, known, works
+  std::array<std::uint32_t, 7> expected_values {418 - l, 363 - l, 274 - l, 348 - l, 162 - l, 219 - l, 282 - l}; // seed 65536, known, works
   //  std::array<std::uint32_t, 7> expected_values {386 - l, 201 - l, 311 - l, 164 - l, 185 - l, 251 - l, 264 - l}; // seed 33554432, known, works
   //  std::array<std::uint32_t, 7> expected_values {263 - l, 375 - l, 393 - l, 269 - l, 422 - l, 418 - l, 328 - l}; // seed 536870912, known, works
   //  std::array<std::uint32_t, 7> expected_values {494 - l, 228 - l, 341 - l, 478 - l, 310 - l, 498 - l, 281 - l}; // seed 1073872896, known, works
 
   //  std::array<std::uint32_t, 7> expected_values {207 - l, 272 - l, 297 - l, 413 - l, 207 - l, 235 - l, 268 - l}; // seed 2181038080, overflow!, known, 402, at 2147483647 = 0x7fffffff
   //  std::array<std::uint32_t, 7> expected_values {394 - l, 306 - l, 448 - l, 203 - l, 449 - l, 389 - l, 408 - l}; // offline, random seed; calculated 845361015 @ 408
-  std::array<std::uint32_t, 7> expected_values {284 - l, 296 - l, 393 - l, 248 - l, 434 - l, 162 - l, 291 - l}; // offline, random seed; calculated 1702494920,  @ 398
+  //  std::array<std::uint32_t, 7> expected_values {284 - l, 296 - l, 393 - l, 248 - l, 434 - l, 162 - l, 291 - l}; // offline, random seed; calculated 1702494920,  @ 398
 
 
 
@@ -199,6 +214,24 @@ void test_mwc_find_seed() {
     expected[i] = expected_values[i];
   }
 
+
+  //  __restrict__ std::uint32_t factor_in,
+  //  __restrict__ std::size_t init_addition,
+  //  __restrict__ std::size_t init_limit,
+  //  __restrict__ std::uint32_t carry_init,
+  //  __restrict__ std::uint32_t advance_limit,
+  //  __restrict__ std::uint32_t modulo,
+  //  __restrict__ std::uint32_t* expected,
+  //  __restrict__ std::size_t expected_count,
+  //  __restrict__ std::uint32_t* output_matches,
+  //  __restrict__ std::size_t output_count,
+  //  __restrict__ std::uint32_t* output_found, // handled atomically.
+  std::uint32_t* output_matches;
+  std::size_t output_count = 10;
+  cudaMallocManaged(&output_matches, sizeof(std::uint32_t) * output_count);
+  std::uint32_t* output_found;
+  cudaMallocManaged(&output_found, sizeof(std::uint32_t));
+
   const auto carry_init = 333 * 2;
 
   //  const std::size_t N = 512;
@@ -206,16 +239,20 @@ void test_mwc_find_seed() {
   int blockSize = 256;
   int numBlocks = ((N +  blockSize - 1) / blockSize) + 1;
   //  int numBlocks = 1;
-  mwc_find_seed_kernel<<<numBlocks, blockSize>>>(factor, 0, seed_limit, carry_init, advance_limit, modulo, expected, expected_values.size());
+  mwc_find_seed_kernel<<<numBlocks, blockSize>>>(factor, 0, seed_limit, carry_init, advance_limit, modulo, expected, expected_values.size(), output_matches, output_count, output_found);
 
-  
+
   // Avoid spinloop by sleeping this thread until woken by the OS.
   // https://forums.developer.nvidia.com/t/cpu-spins-while-waiting-for-gpu-to-finish-computation/241672/5
   // https://forums.developer.nvidia.com/t/best-practices-for-cudadevicescheduleblockingsync-usage-pattern-on-linux/180741/2
   cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
   cudaDeviceSynchronize();
 
+  printf("Found outputs: %u\n", *output_found);
+  for (int i =0; i < *output_found; i++) {
+    printf(" at: 0x%08x (%d)\n", output_matches[i], output_matches[i]);
 
+  }
   // Free memory
   cudaFree(expected);
 
