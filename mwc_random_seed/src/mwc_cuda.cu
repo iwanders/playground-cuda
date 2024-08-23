@@ -6,6 +6,8 @@
 
 extern "C" {
 
+
+/// Single advance for the multiply with carry random number generator.
 __device__ inline void advance(const std::uint64_t& factor, std::uint32_t& carry, std::uint32_t& value) {
     std::uint64_t value_u64 = static_cast<std::uint64_t>(value);
     std::uint64_t carry_u64 = static_cast<std::uint64_t>(carry);
@@ -14,6 +16,7 @@ __device__ inline void advance(const std::uint64_t& factor, std::uint32_t& carry
     value = new_value;
 }
 
+/// Function to produce and store sequences of generated numbers.
 __global__ void mwc_store_output_kernel(
   __restrict__ std::uint32_t factor_in,
   std::size_t count_in,
@@ -38,7 +41,16 @@ __global__ void mwc_store_output_kernel(
 }
 
 
+/// Maximum number of expected values, this needs to be a constant an array of this size is allocated.
 #define EXPECTED_COUNT_MAX 16
+
+
+/// Function that searches for an expected sequence.
+///
+/// This searches all seeds up to init_limit, advances up to advance_limit for each seed. The
+/// generated values are modulo'd with the provided value and matched against the expected values.
+/// If the consecutive sequence of generated and modulo'd numbers match against the expected numbers
+/// it gets added to output_matches. If output_matches is fully populated, the search is stopped.
 __global__ void mwc_find_seed_kernel(
   __restrict__ std::uint32_t factor_in,
   __restrict__ std::size_t init_addition,
