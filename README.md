@@ -11,7 +11,11 @@ nsys nvprof ./main
 
 ## mwc_random_seed
 
-In some games a [mutlipy-with-carry](https://en.wikipedia.org/wiki/Multiply-with-carry_pseudorandom_number_generator) pseudorandom number generator is used. The code here implements a particular set of random rolls in a game such that we can brute force the initialisation seed based on the visible observations in the game. Confirmed this works in the offline game, but the online servers seem to use a different (true random?) random number generator.
+In some games a [mutlipy-with-carry](https://en.wikipedia.org/wiki/Multiply-with-carry_pseudorandom_number_generator) pseudorandom number generator is used. The code here implements a particular set of random rolls in a game such that we can brute force the initialisation seed based on the visible observations in the game.
+
+Confirmed this works in the offline game, but the online servers seem to use a different (true random?) random number generator.
+
+The main logic is in the `mwc_cuda.cu` file, the `Makefile` can be used to compile and run this for some tests. The `mwc_cuda.rs` file shows how to do rust bindings to the cuda file and runs these from the unit tests. This is modelled after one of the `cudarc` [examples](https://github.com/coreylowman/cudarc/tree/d7ac2b481cb637f7a73f2520ff2d12809285133f/examples/07-build-workflow).
 
 ## Background
 
