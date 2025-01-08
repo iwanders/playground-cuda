@@ -19,6 +19,8 @@ The main logic is in the `mwc_cuda.cu` file, the `Makefile` can be used to compi
 
 The `mwc_cuda.rs` file shows how to do rust bindings that allow calling into the library compiled with `nvcc`. The unit tests then call into these and verify results. This is modelled after one of the `cudarc` [examples](https://github.com/coreylowman/cudarc/tree/d7ac2b481cb637f7a73f2520ff2d12809285133f/examples/07-build-workflow).
 
+Run this by running the example.
+
 ## Background
 
 These two videos are well worth the watch:
